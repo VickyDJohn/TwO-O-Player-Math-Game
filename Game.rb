@@ -6,13 +6,23 @@ class Game
 
   def start_game
     puts "Let's start the game!"
+
+    questions_asked = 0
+    questions_pool = Questions::QUESTIONS.dup
+
     loop do
-      current_question = MathQuestion.new
+      if questions_pool.empty?
+        puts "All questions have been asked."
+        break
+      end
+
+      current_question = select_random_question(questions_pool)
+      puts "#{@current_player.name}:"
       puts current_question.question
 
       player_answer = gets.chomp
 
-      if current_question.check_answer(player_answer)
+      if current_question.check_answer(player_answer.to_i)
         puts "Correct!"
         @current_player.answer_question(true)
       else
@@ -22,13 +32,22 @@ class Game
 
       display_scores
 
-      if is_game_over
+      questions_asked += 1
+
+      if questions_asked == 10
         announce_winner
         break
       end
 
       switch_turn
     end
+  end
+
+  def select_random_question(questions_pool)
+    # Select a random question from the questions pool and remove it
+    index = rand(questions_pool.length)
+    question = questions_pool.delete_at(index)
+    Questions.new(question)
   end
 
   def switch_turn
@@ -51,9 +70,10 @@ class Game
     @players.each do |player|
       puts "#{player.name}: Score - #{player.score}, Lives - #{player.lives}"
     end
+    puts ""
   end
 
   def is_game_over
-    @players.each { |player| !player.is_alive }
+    @players.any? { |player| player.lives <= 0 }
   end
 end
